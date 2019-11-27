@@ -1,0 +1,28 @@
+{
+   "name": "nodeapi",
+   "version": "1.0.0",
+   "description": "Learning http",
+   "main": "server.js",
+   "scripts": {
+      "test": "git repository",
+      "start": "NODE_ENV=production nodemon server",
+      "dev": "nodemon server"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/pedroOlivarez/NodeAPI.git"
+   },
+   "author": "Pedro Olivarez",
+   "license": "ISC",
+   "bugs": {
+      "url": "https://github.com/pedroOlivarez/NodeAPI/issues"
+   },
+   "homepage": "https://github.com/pedroOlivarez/NodeAPI#readme",
+   "devDependencies": {
+      "nodemon": "^2.0.1"
+   },
+   "dependencies": {
+      "dotenv": "^8.2.0",
+      "express": "^4.17.1"
+   }
+}
