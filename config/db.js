@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const TIMEOUT = 10000;
 
 const connectWithTimeout = ms => {
    const ourPromise = new Promise(async (resolve, reject) => {
@@ -21,7 +22,7 @@ const connectWithTimeout = ms => {
 };
 
 const connectDB = async () => {
-   const conn = await connectWithTimeout(5000);
+   const conn = await connectWithTimeout(TIMEOUT);
    console.log(`MongoDB Connected: ${conn.connection.host}`.magenta.underline.bold);
 };
 

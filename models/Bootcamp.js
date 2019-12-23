@@ -36,13 +36,13 @@ const BootcampSchema = new mongoose.Schema({
    location: {
       type: {
          type: String,
-         enum: ["Point"],
-         required: true
+         enum: ["Point"]
+         // required: true
       },
       coordinates: {
          //Array of numbers
          type: [Number],
-         required: true,
+         // required: true,
          index: "2dsphere"
       },
       formattedAddress: String,
