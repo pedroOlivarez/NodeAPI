@@ -16,9 +16,14 @@ function errorHandler(err, req, res, next) {
 
    if (err.name === "ValidationError") {
       const message = Object.values(err.errors)
-         .map((e) => e.message)
+         .map(e => e.message)
          .join(". ");
       error = new ErrorResponse(message, 400);
+   }
+
+   if (err.statusCode === 404) {
+      const message = err.message;
+      error = new ErrorResponse(message, 404);
    }
 
    res.status(error.statusCode || 500).json({
