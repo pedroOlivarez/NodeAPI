@@ -1,12 +1,17 @@
-const Bootcamp = require("../models/Bootcamp");
-const ErrorResponse = require("../utils/errorResponse");
-const asyncHandler = require("../middleware/async");
+const Bootcamp = require('../models/Bootcamp');
+const ErrorResponse = require('../utils/errorResponse');
+const asyncHandler = require('../middleware/async');
+const geocoder = require('../utils/geocoder');
 
 //@desc     Get all bootcamps
 //@route    GET /api/v1/bootcamps
+
 //@access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-   const bootcamps = await Bootcamp.find();
+   const bootcamps = 
+      req.query 
+      ? await Bootcamp.find(req.query) 
+      : await Bootcamp.find();
    res.status(200).json({ success: true, count: bootcamps.length, data: bootcamps });
 });
 
@@ -57,16 +62,40 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/v1/bootcamps/:id
 //@access   PRIVATE
 exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
-   try {
-      const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+   const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
 
-      if (!bootcamp) {
-         const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
-         return next(errResponse);
-      }
-
-      res.status(200).json({ success: true, data: bootcamp });
-   } catch (err) {
-      next(err);
+   if (!bootcamp) {
+      const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
+      return next(errResponse);
    }
+
+   res.status(200).json({ success: true, data: bootcamp });
+});
+
+// @desc    Get Bootcamps within a radius
+// @route   GET /api/v1/bootcamps/radius/:zipcode/:distance
+// @access  Private
+exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
+   const { zipcode, distance } = req.params;
+
+   const location = await geocoder.geocode(zipcode);
+   const lat = location[0].latitude;
+   const long = location[0].longitude;
+   const earthRadius = 3963;
+
+   const radius = distance / earthRadius;
+
+   const bootcamps = await Bootcamp.find({
+      location: {
+         $geoWithin: {
+            $centerSphere: [[long, lat], radius],
+         },
+      },
+   });
+
+   res.status(200).json({
+      success: true,
+      count: bootcamps.length,
+      data: bootcamps,
+   });
 });
