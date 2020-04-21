@@ -8,10 +8,14 @@ const geocoder = require('../utils/geocoder');
 
 //@access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-   const bootcamps = 
-      req.query 
-      ? await Bootcamp.find(req.query) 
-      : await Bootcamp.find();
+   let promise = 
+      !!req.query 
+         ? Bootcamp.find(req.query) 
+         : Bootcamp.find();
+   // bootcamps =
+   if (req.select) promise = promise.select(req.select)
+   promise = promise.sort(req.sort);
+   const bootcamps = await promise;
    res.status(200).json({ success: true, count: bootcamps.length, data: bootcamps });
 });
 
