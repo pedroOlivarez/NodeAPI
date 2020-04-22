@@ -5,18 +5,32 @@ const geocoder = require('../utils/geocoder');
 
 //@desc     Get all bootcamps
 //@route    GET /api/v1/bootcamps
-
 //@access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-   let promise = 
+   let query = 
       !!req.query 
          ? Bootcamp.find(req.query) 
          : Bootcamp.find();
-   // bootcamps =
-   if (req.select) promise = promise.select(req.select)
-   promise = promise.sort(req.sort);
-   const bootcamps = await promise;
-   res.status(200).json({ success: true, count: bootcamps.length, data: bootcamps });
+
+   if (req.select) query = query.select(req.select)
+   
+   query =
+      query
+         .sort(req.sort)
+         .skip(req.start)
+         .limit(req.limit);
+
+   const pagination = await getPagination(req);
+   const bootcamps = await query;
+
+   res
+      .status(200)
+      .json({ 
+         success: true,
+         count: bootcamps.length,
+         pagination,
+         data: bootcamps,
+      });
 });
 
 //@desc     Get single bootcamp
@@ -103,3 +117,24 @@ exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
       data: bootcamps,
    });
 });
+
+async function getPagination({ query, start, end, page, limit }) {
+   const pagination = {};
+   const total = await Bootcamp.countDocuments(query);
+
+   if (start > 0) {
+      pagination.prev = {
+         page: page - 1,
+         limit,
+      };
+   }
+
+   if (end < total) {
+      pagination.next = {
+         page: page + 1,
+         limit
+      };
+   }
+   
+   return pagination;
+}

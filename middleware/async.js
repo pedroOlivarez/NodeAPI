@@ -1,7 +1,12 @@
 const excludedFields = [
    'select',
-   'sort'
+   'sort',
+   'page',
+   'limit',
 ];
+
+const _pageDefault_ = 1;
+const _limitDefault_ = 10;
 
 function asyncHandler(fn) {
    return function (req, res, next) {
@@ -18,7 +23,12 @@ function asyncHandler(fn) {
 
          if(req.query.sort) req.sort = req.query.sort.replace(/,/g, ' ');
          else req.sort = '-createdAt';
-         
+
+         req.page = parseInt(req.query.page, 10) || _pageDefault_;
+         req.limit = parseInt(req.query.limit, 10) || _limitDefault_;
+         req.start = (req.page - 1) * req.limit;
+         req.end = req.page * req.limit;
+
          req.query = JSON.parse(queryStr);
       }
       return Promise.resolve(fn(req, res, next)).catch(next);
