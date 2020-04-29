@@ -16,6 +16,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
    
    query =
       query
+         .populate('courses')
          .sort(req.sort)
          .skip(req.start)
          .limit(req.limit);
@@ -37,7 +38,9 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
 //@route    GET /api/v1/bootcamps/:id
 //@access   PUBLIC
 exports.getBootcamp = asyncHandler(async (req, res, next) => {
-   const bootcamp = await Bootcamp.findById(req.params.id);
+   const bootcamp = await Bootcamp
+      .findById(req.params.id)
+      .populate('courses');
 
    if (!bootcamp) {
       const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
@@ -80,12 +83,16 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
 //@route    DELETE /api/v1/bootcamps/:id
 //@access   PRIVATE
 exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
-   const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+   const bootcamp = await Bootcamp
+      .findById(req.params.id)
+      .populate('courses');
 
    if (!bootcamp) {
       const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
       return next(errResponse);
    }
+
+   bootcamp.remove();
 
    res.status(200).json({ success: true, data: bootcamp });
 });
@@ -103,13 +110,15 @@ exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
 
    const radius = distance / earthRadius;
 
-   const bootcamps = await Bootcamp.find({
-      location: {
-         $geoWithin: {
-            $centerSphere: [[long, lat], radius],
+   const bootcamps = await Bootcamp.find(
+      {
+         location: {
+            $geoWithin: {
+               $centerSphere: [[long, lat], radius],
+            },
          },
-      },
-   });
+      })
+      .populate('courses');
 
    res.status(200).json({
       success: true,
