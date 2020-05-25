@@ -28,7 +28,6 @@ function asyncHandler(fn) {
          req.limit = parseInt(req.query.limit, 10) || _limitDefault_;
          req.start = (req.page - 1) * req.limit;
          req.end = req.page * req.limit;
-
          req.query = JSON.parse(queryStr);
       }
       return Promise.resolve(fn(req, res, next)).catch(next);
