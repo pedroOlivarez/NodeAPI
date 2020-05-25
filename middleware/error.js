@@ -23,10 +23,12 @@ function errorHandler(err, req, res, next) {
 
    error = new ErrorResponse(message, statusCode);
 
-   res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Server error",
-   });
+   res
+      .status(error.statusCode || 500)
+      .json({
+         success: false,
+         message: error.message || "Server error",
+      });
 }
 
 module.exports = errorHandler;

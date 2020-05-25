@@ -47,7 +47,12 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
       return next(errResponse);
    }
 
-   res.status(200).json({ success: true, data: bootcamp });
+   res
+      .status(200)
+      .json({
+         success: true,
+         data: bootcamp
+      });
 });
 
 //@desc     Create new bootcamp
@@ -56,20 +61,24 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 exports.createBootcamp = asyncHandler(async (req, res, next) => {
    const bootcamp = await Bootcamp.create(req.body);
 
-   res.status(201).json({
-      success: true,
-      data: bootcamp,
-   });
+   res
+      .status(201)
+      .json({
+         success: true,
+         data: bootcamp,
+      });
 });
 
 //@desc     Update bootcamp
 //@route    PUT /api/v1/bootcamps/:id
 //@access   PRIVATE
 exports.updateBootcamp = asyncHandler(async (req, res, next) => {
-   const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-   });
+   const bootcamp = await Bootcamp
+      .findByIdAndUpdate(
+         req.params.id,
+         req.body,
+         { new: true, runValidators: true, }
+      );
 
    if (!bootcamp) {
       const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
@@ -110,8 +119,8 @@ exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
 
    const radius = distance / earthRadius;
 
-   const bootcamps = await Bootcamp.find(
-      {
+   const bootcamps = await Bootcamp
+      .find({
          location: {
             $geoWithin: {
                $centerSphere: [[long, lat], radius],
