@@ -1,3 +1,4 @@
+const path = require('path');
 const Bootcamp = require('../models/Bootcamp');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
@@ -134,6 +135,50 @@ exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
       count: bootcamps.length,
       data: bootcamps,
    });
+});
+
+//@desc     Upload photo for bootcamp
+//@route    PUT /api/v1/bootcamps/:id/photo
+//@access   PRIVATE
+exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
+   let errResponse;
+   const bootcamp = await Bootcamp.findById(req.params.id);
+
+   if (!bootcamp) {
+      errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404);
+   } else if (!req.files) {
+      errResponse = new ErrorResponse('Please upload a file', 400);
+   } else {
+      const { file } = req.files;
+
+      if (!file.mimetype.startsWith('image')) {
+         errResponse = new ErrorResponse('Please upload a valid image file', 400);
+      } else if (file.size > process.env.MAX_FILE_UPLOAD) {
+         errResponse = new ErrorResponse(`Please upload an image smaller than ${process.env.MAX_FILE_UPLOAD / 1000000} MB`, 400);
+      } else {
+         file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+         file.mv(
+            `${process.env.FILE_UPLOAD_PATH}/${file.name}`,
+            async(err) => {
+               if(err) {
+                  console.error(err);
+                  return next(new ErrorResponse('Problem with file upload', 500));
+               }
+
+               await Bootcamp.findByIdAndUpdate(req.params.id, { photo: file.name });
+               const data = {
+                  _id: req.params.id,
+                  photo: file.name,
+               };
+               res
+                  .status(200)
+                  .json({ success: true, data, });
+            }   
+         );
+      }
+   }
+
+   if (errResponse) return next(errResponse);
 });
 
 async function getPagination({ query, start, end, page, limit }) {

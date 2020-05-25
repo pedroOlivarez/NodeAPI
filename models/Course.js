@@ -44,8 +44,6 @@ const CourseSchema =
 
 CourseSchema.statics.getAverageCost = 
    async function(bootcampId) {
-      console.log('Calculating avg cost...'.blue);
-
       const obj = await this.aggregate([
          {
             $match: { bootcamp: bootcampId },
@@ -56,7 +54,7 @@ CourseSchema.statics.getAverageCost =
                getAverageCost: { $avg: '$tuition'},
             }
          }
-      ])
+      ]);
 
       const averageCost = Math.trunc(obj[0].getAverageCost);
    

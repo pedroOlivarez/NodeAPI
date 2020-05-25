@@ -19,6 +19,9 @@ function errorHandler(err, req, res, next) {
    } else if (err.statusCode === 404) {
       message = err.message;
       statusCode = 404;
+   } else {
+      message = err.message;
+      statusCode = err.statusCode;
    }
 
    error = new ErrorResponse(message, statusCode);
