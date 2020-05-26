@@ -175,10 +175,12 @@ exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
                }
 
                await Bootcamp.findByIdAndUpdate(req.params.id, { photo: file.name });
+
                const data = {
                   _id: req.params.id,
                   photo: file.name,
                };
+               
                res
                   .status(status.success.OK)
                   .json({ success, data, });

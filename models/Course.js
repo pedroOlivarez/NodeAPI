@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-function getAverageCost() {
-   this.constructor.getAverageCost(this.bootcamp);
-}
 
 const CourseSchema =
    new mongoose.Schema({
@@ -42,37 +39,37 @@ const CourseSchema =
       }
    });
 
-CourseSchema.statics.getAverageCost = 
-   async function(bootcampId) {
-      const obj = await this.aggregate([
-         {
-            $match: { bootcamp: bootcampId },
-         },
-         {
-            $group: {
-               _id: '$bootcamp',
-               getAverageCost: { $avg: '$tuition'},
-            }
+CourseSchema.statics.getAverageCost = async function(bootcampId) {
+   const obj = await this.aggregate([
+      {
+         $match: { bootcamp: bootcampId },
+      },
+      {
+         $group: {
+            _id: '$bootcamp',
+            getAverageCost: { $avg: '$tuition'},
          }
-      ]);
-
-      const averageCost = Math.trunc(obj[0].getAverageCost);
-   
-      try {
-         await this.model('Bootcamp')
-            .findByIdAndUpdate(
-               bootcampId,
-               { averageCost }
-            );
-      } catch(err) {
-         console.error(err);
       }
-   };
+   ]);
+
+   const averageCost = Math.trunc(obj[0].getAverageCost);
+
+   try {
+      await this.model('Bootcamp')
+         .findByIdAndUpdate(bootcampId, { averageCost });
+   } catch(err) {
+      console.error(err);
+   }
+};
 
 
-// Call getAverageCost after save
+// These pass through the function defined below:
 CourseSchema.post('save', getAverageCost);
-// Call getAverageCost before remove
 CourseSchema.pre('remove', getAverageCost);
+
+function getAverageCost() {
+   // And this calls the function defined in CourseSchema.statics.getAverageCost
+   this.constructor.getAverageCost(this.bootcamp);
+}
 
 module.exports = mongoose.model('Course', CourseSchema);
