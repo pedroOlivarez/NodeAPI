@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const TIMEOUT = 10000;
 
 const connectWithTimeout = ms => {
