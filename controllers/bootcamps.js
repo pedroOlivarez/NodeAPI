@@ -10,19 +10,17 @@ const success = true;
 //@route    GET /api/v1/bootcamps
 //@access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-   let query = 
-      !!req.query 
-         ? Bootcamp.find(req.query) 
-         : Bootcamp.find();
+   let query = req.query 
+      ? Bootcamp.find(req.query) 
+      : Bootcamp.find();
 
    if (req.select) query = query.select(req.select)
    
-   query =
-      query
-         .populate('courses')
-         .sort(req.sort)
-         .skip(req.start)
-         .limit(req.limit);
+   query = query
+      .populate('courses')
+      .sort(req.sort)
+      .skip(req.start)
+      .limit(req.limit);
 
    const pagination = await getPagination(req);
    const bootcamps = await query;
@@ -199,16 +197,19 @@ async function getPagination({ query, start, end, page, limit }) {
    if (start > 0) {
       pagination.prev = {
          page: page - 1,
-         limit,
+         count: limit,
       };
    }
 
    if (end < total) {
+      const count = Math.min(limit, (total - end));
       pagination.next = {
          page: page + 1,
-         limit
+         count,
       };
    }
+
+   pagination.total = total;
    
    return pagination;
 }
