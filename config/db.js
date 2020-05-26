@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const TIMEOUT = 10000;
 
-const connectWithTimeout = ms => {
+function connectWithTimeout(ms) {
    const ourPromise = new Promise(async (resolve, reject) => {
       try {
          setTimeout(
