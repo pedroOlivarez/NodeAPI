@@ -8,9 +8,24 @@ const success = true;
 //@route    POST /api/v1/auth/register
 //@access   PUBLIC
 exports.register = asyncHandler(async(req, res, next) => {
-   console.log('pedro');
-   const data = {
-      token: 'Pedro is cool'
-   };
-   res.status(status.success.CREATED).json({ success, data });
+   const {
+      name,
+      email,
+      password,
+      role,
+   } = req.body;
+
+   const user = await User.create({
+      name,
+      email,
+      password,
+      role,
+   });
+
+   // Create token
+   const data = user.getSignedJwtToken();
+
+   res
+      .status(status.success.CREATED)
+      .json({ success, data });
 });
