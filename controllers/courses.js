@@ -9,42 +9,7 @@ const success = true;
 // @route GET /api/v1/courses
 // @route GET /api/v1/bootcamps/:bootcampId/courses
 // @access Public
-exports.getCourses = asyncHandler(async(req, res, next) => {
-   const bootcamp = req.params.bootcampId;
-
-   if (req.query && bootcamp) {
-      req.query.bootcamp = bootcamp
-   } else if (bootcamp) {
-      req.query = { bootcamp };
-   }
-
-   let query = req.query
-      ? Course.find(req.query)
-      : Course.find();
-   
-   if (req.select) query = query.select(req.select);
-
-   query = query
-      .populate({
-         path: 'bootcamp',
-         select: 'name description',
-      })
-      .sort(req.sort)
-      .skip(req.start)
-      .limit(req.limit);
-   
-   const pagination = await getPagination(req);
-   const courses = await query;
-
-   res
-      .status(status.success.OK)
-      .json({
-         success,
-         count: courses.length,
-         pagination,
-         data: courses,
-      });
-});
+exports.getCourses = asyncHandler(async(req, res, next) => res.status(status.success.OK).json(res.results));
 
 // @desc Get a single course
 // @route GET /api/v1/courses/:id
@@ -139,27 +104,3 @@ exports.deleteCourse = asyncHandler(async(req, res, next) => {
          data: course,
       });
 });
-
-async function getPagination({ query, start, end, page, limit }) {
-   const pagination = {};
-   const total = await Course.countDocuments(query);
-
-   if (start > 0) {
-      pagination.prev = {
-         page: page - 1,
-         count: limit,
-      };
-   }
-
-   if (end < total) {
-      const count = Math.min(limit, (total - end));
-      pagination.next = {
-         page: page + 1,
-         count,
-      };
-   }
-
-   pagination.total = total;
-   
-   return pagination;
-}

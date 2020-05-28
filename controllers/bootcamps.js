@@ -10,29 +10,9 @@ const success = true;
 //@route    GET /api/v1/bootcamps
 //@access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-   let query = req.query 
-      ? Bootcamp.find(req.query) 
-      : Bootcamp.find();
-
-   if (req.select) query = query.select(req.select)
-   
-   query = query
-      .populate('courses')
-      .sort(req.sort)
-      .skip(req.start)
-      .limit(req.limit);
-
-   const pagination = await getPagination(req);
-   const bootcamps = await query;
-
    res
       .status(status.success.OK)
-      .json({ 
-         success,
-         count: bootcamps.length,
-         pagination,
-         data: bootcamps,
-      });
+      .json(res.results);
 });
 
 //@desc     Get single bootcamp
@@ -191,27 +171,3 @@ exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
 
    if (errResponse) return next(errResponse);
 });
-
-async function getPagination({ query, start, end, page, limit }) {
-   const pagination = {};
-   const total = await Bootcamp.countDocuments(query);
-
-   if (start > 0) {
-      pagination.prev = {
-         page: page - 1,
-         count: limit,
-      };
-   }
-
-   if (end < total) {
-      const count = Math.min(limit, (total - end));
-      pagination.next = {
-         page: page + 1,
-         count,
-      };
-   }
-
-   pagination.total = total;
-   
-   return pagination;
-}
