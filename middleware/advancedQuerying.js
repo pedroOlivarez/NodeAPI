@@ -7,7 +7,6 @@ const _excludedFields = [
    'limit',
 ];
 
-// TO-DO: After this is working, deconstrucdt req in here
 function modifyRequest(req) {
    let queryStr;
    const bootcamp = req.params.bootcampId;
@@ -19,33 +18,30 @@ function modifyRequest(req) {
       req.end = _limitDefault;
       req.sort = '-createdAt';
       if (bootcamp) req.query = { bootcamp };
-      // TO-DO: Might not be necessary if we're editing reference
-      return req;
+   } else {
+      if (bootcamp) req.query.bootcamp = bootcamp;
+
+      const ourQuery = {...req.query};
+
+      if (req.query.select) req.select = req.query.select.replace(/,/g, ' ');
+
+      req.sort = req.query.sort
+         ? req.query.sort.replace(/,/g, ' ')
+         : '-createdAt';
+
+      // NaN is falsey
+      req.page = parseInt(req.query.page, 10) || _pageDefault;
+      req.limit = parseInt(req.query.limit, 10) || _limitDefault;
+      req.start = (req.page - 1) * req.limit;
+      req.end = req.page * req.limit;
+
+      _excludedFields.forEach(param => delete ourQuery[param]);
+
+      queryStr = JSON.stringify(ourQuery);
+      queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+
+      req.query = JSON.parse(queryStr);
    }
-
-   if (bootcamp) req.query.bootcamp = bootcamp;
-
-   const ourQuery = {...req.query};
-
-   if (req.query.select) req.select = req.query.select.replace(/,/g, ' ');
-
-   if(req.query.sort) req.sort = req.query.sort.replace(/,/g, ' ');
-   else req.sort = '-createdAt';
-
-   req.page = parseInt(req.query.page, 10) || _pageDefault;
-   req.limit = parseInt(req.query.limit, 10) || _limitDefault;
-   req.start = (req.page - 1) * req.limit;
-   req.end = req.page * req.limit;
-
-   _excludedFields.forEach(param => delete ourQuery[param]);
-
-   queryStr = JSON.stringify(ourQuery);
-   queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-
-   req.query = JSON.parse(queryStr);
-   
-   // TO-DO: Might not be necessary if we're editing reference
-   return req;
 }
 
 async function getPagination({ query, start, end, page, limit }, model) {
@@ -74,7 +70,7 @@ async function getPagination({ query, start, end, page, limit }, model) {
 
 function advancedQuerying(model, populate) {
    return async function(req, res, next) {
-      req = modifyRequest(req);
+      modifyRequest(req);
 
       let query = req.query
          ? model.find(req.query)
