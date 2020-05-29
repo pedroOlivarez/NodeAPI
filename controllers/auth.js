@@ -1,3 +1,4 @@
+var bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
@@ -29,3 +30,34 @@ exports.register = asyncHandler(async(req, res, next) => {
       .status(status.success.CREATED)
       .json({ success, data });
 });
+
+//@desc     Sign in and get that web token
+//@route    POST /api/v1/auth/authenticate
+//@access   PUBLIC
+exports.authenticate = asyncHandler(async(req, res, next) => {
+   let resStatus;
+   let response = { success };
+   const { email, password } = req.body;
+   const user = await User
+      .findOne({ email })
+      .select('_id email +password');
+
+   if (!user) {
+      const errResponse = new ErrorResponse(`${email} is not a registered email address`, status.error.NOT_FOUND);
+      return next(errResponse);
+   }
+
+   if(bcrypt.compareSync(password, user.password)) {
+      response.data = user.getSignedJwtToken();
+      resStatus = status.success.OK;
+   } else {
+      response.success = false;
+      response.data = 'incorrect password for user'
+      resStatus = status.error.BAD_REQUEST;
+   }
+
+   res
+      .status(resStatus)
+      .json(response);
+
+})
