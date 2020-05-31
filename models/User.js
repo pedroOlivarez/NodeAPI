@@ -41,7 +41,10 @@ UserSchema.pre('save', async function(next) {
    next();
 });
 
-// Token time
+UserSchema.methods.validatePassword = async function(password) {
+   return await bcrypt.compare(password, this.password);
+}
+
 UserSchema.methods.getSignedJwtToken = function() {
    const payload = {
       id: this._id,
@@ -52,7 +55,7 @@ UserSchema.methods.getSignedJwtToken = function() {
       payload,
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE }
-      )
+   );
 }
 
 module.exports = mongoose.model('User', UserSchema);
