@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const morgan = require('morgan');
 const colors = require('colors');
 const fileUpload = require('express-fileupload');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 const bootcamps = require('./routes/bootcamps');
@@ -19,6 +20,7 @@ const app = express();
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(fileUpload());
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -22,8 +22,11 @@ exports.register = asyncHandler(async(req, res, next) => {
       role,
    });
 
-   // Create token
-   const data = user.getSignedJwtToken();
+   const data = {
+      name,
+      email,
+      role: user.role,
+   }
 
    res
       .status(status.success.CREATED)
@@ -34,12 +37,10 @@ exports.register = asyncHandler(async(req, res, next) => {
 //@route    POST /api/v1/auth/authenticate
 //@access   PUBLIC
 exports.authenticate = asyncHandler(async(req, res, next) => {
-   let resStatus;
-   let response = { success };
    const { email, password } = req.body;
 
    if (!email || !password) {
-      const errResponse = new ErrorResponse('Please prove and email and a password', status.error.BAD_REQUEST);
+      const errResponse = new ErrorResponse('Please provide an email and a password', status.error.BAD_REQUEST);
       return next(errResponse);
    }
 
@@ -48,20 +49,42 @@ exports.authenticate = asyncHandler(async(req, res, next) => {
       .select('_id role +password');
 
    if (!user) {
-      const errResponse = new ErrorResponse('Invalid Credentials', status.error.UNAUTHORIZED);
+      const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
       return next(errResponse);
    }
 
-   if(await user.validatePassword(password)) {
-      response.token = user.getSignedJwtToken();
-      resStatus = status.success.OK;
-   } else {
-      response.success = false;
-      response.message = 'Invalid Credentials'
-      resStatus = status.error.UNAUTHORIZED;
-   }
+   if (!await user.validatePassword(password)) {
+      const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
+      return next(errResponse);
+   } else sendTokenResponse(user, status.success.OK, res);
+});
+
+//@desc     Get current logged in user
+//@route    POST /api/v1/auth/me
+//@access   PRIVATE
+exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
+   const user = await User.findById(req.user.id);
 
    res
-      .status(resStatus)
-      .json(response);
+      .status(status.success.OK)
+      .json({
+         success,
+         data: user,
+      });
 })
+
+function sendTokenResponse(user, statusCode, res) {
+   const token = user.getSignedJwtToken();
+
+   const options = {
+      expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 60 * 1000),
+      httpOnly: true,
+   }
+
+   if (process.env.NODE_ENV === 'production') options.secure = true;
+
+   res
+      .status(statusCode)
+      .cookie('token', token, options)
+      .json({ success, token });
+}
