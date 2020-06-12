@@ -9,16 +9,16 @@ const success = true;
 //@route    POST /api/v1/auth/register
 //@access   PUBLIC
 exports.register = asyncHandler(async(req, res, next) => {
-   const {
+   const { password } = req.body;
+   let {
       name,
       email,
-      password,
       role,
    } = req.body;
 
-   name = name.trim();
-   email = email.toLowerCase().trim();
-   role = role.toLowerCase().trim();
+   if (name) name = name.trim();
+   if (email) email = email.toLowerCase().trim();
+   if (role) role = role.toLowerCase().trim();
 
    if (role === roles.ADMIN && req.user.role !== roles.ADMIN) {
       const errResponse = new ErrorResponse('Only an admin can register another admin.', status.error.UNAUTHORIZED);
