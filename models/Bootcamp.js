@@ -113,8 +113,6 @@ BootcampSchema.pre('save', function (next) {
 });
 
 BootcampSchema.pre('save', async function (next) {
-   // As of 6.12 something has started going wrong on initialization of geocoder. API key is not being set.
-   geoCoder._geocoder.options.apiKey = process.env.GEOCODER_KEY;
    const _location = await geoCoder.geocode(this.address);
    this.location = {
       type: 'Point',

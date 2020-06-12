@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config({ path: './config/config.env' });
 const morgan = require('morgan');
 const colors = require('colors');
 const fileUpload = require('express-fileupload');
@@ -11,7 +12,6 @@ const bootcamps = require('./routes/bootcamps');
 const courses = require('./routes/courses');
 const auth = require('./routes/auth');
 
-dotenv.config({ path: './config/config.env' });
 connectDB();
 
 const app = express();
