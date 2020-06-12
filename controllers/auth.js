@@ -2,6 +2,7 @@ const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const { status } = require('../enums/responseStatus');
+const { roles } = require('../enums/roles');
 const success = true;
 
 //@desc     Register user
@@ -14,6 +15,15 @@ exports.register = asyncHandler(async(req, res, next) => {
       password,
       role,
    } = req.body;
+
+   name = name.trim();
+   email = email.toLowerCase().trim();
+   role = role.toLowerCase().trim();
+
+   if (role === roles.ADMIN && req.user.role !== roles.ADMIN) {
+      const errResponse = new ErrorResponse('Only an admin can register another admin.', status.error.UNAUTHORIZED);
+      return next(errResponse);
+   }
 
    const user = await User.create({
       name,

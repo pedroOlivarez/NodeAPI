@@ -4,6 +4,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const geocoder = require('../utils/geocoder');
 const { status } = require('../enums/responseStatus');
+const { roles } = require('../enums/roles');
 const success = true;
 
 //@desc     Get all bootcamps
@@ -40,6 +41,14 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 //@route    POST /api/v1/bootcamps/
 //@access   PRIVATE
 exports.createBootcamp = asyncHandler(async (req, res, next) => {
+   req.body.user = req.user.id;
+   if (req.user.role !== roles.ADMIN) {
+      const publishedBootcamp = await Bootcamp.findOne({user: req.user.id});
+      if (publishedBootcamp) {
+         const errResponse = new ErrorResponse(`User: ${req.user.id} already has a published bootcamp in our sytem: ${publishedBootcamp.name}`, status.error.UNAUTHORIZED);
+         return next(errResponse);
+      }
+   }
    const bootcamp = await Bootcamp.create(req.body);
 
    res
