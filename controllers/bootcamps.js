@@ -63,17 +63,19 @@ exports.createBootcamp = asyncHandler(async (req, res, next) => {
 //@route    PUT /api/v1/bootcamps/:id
 //@access   PRIVATE
 exports.updateBootcamp = asyncHandler(async (req, res, next) => {
-   const bootcamp = await Bootcamp
-      .findByIdAndUpdate(
-         req.params.id,
-         req.body,
-         { new: true, runValidators: true, }
-      );
+   let bootcamp = await Bootcamp.findById(req.params.id);
 
    if (!bootcamp) {
       const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, status.error.NOT_FOUND);
       return next(errResponse);
    }
+
+   if (req.user.role !== roles.ADMIN && bootcamp.user.toString() !== req.user.id) {
+      const errResponse = new ErrorResponse('User is not authorized to update this bootcamp', status.error.UNAUTHORIZED);
+      return next(errResponse);
+   }
+
+   bootcamp = await Bootcamp.findOneAndUpdate(req.params.id, req.body, { new: true, runValidators: true});
 
    res
       .status(status.success.OK)
@@ -90,6 +92,11 @@ exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
 
    if (!bootcamp) {
       const errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, status.error.NOT_FOUND);
+      return next(errResponse);
+   }
+
+   if (req.user.role !== roles.ADMIN && bootcamp.user.toString() !== req.user.id) {
+      const errResponse = new ErrorResponse('User is not authorized to delete this bootcamp', status.error.UNAUTHORIZED);
       return next(errResponse);
    }
 
@@ -141,6 +148,8 @@ exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
 
    if (!bootcamp) {
       errResponse = new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, status.error.NOT_FOUND);
+   } else if (req.user.role !== roles.ADMIN && bootcamp.user.toString() !== req.user.id) {
+      errResponse = new ErrorResponse('User is not authorized to delete this bootcamp', status.error.UNAUTHORIZED);
    } else if (!req.files) {
       errResponse = new ErrorResponse('Please upload a file', status.error.BAD_REQUEST);
    } else {
