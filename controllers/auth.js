@@ -5,9 +5,9 @@ const { status } = require('../enums/responseStatus');
 const { roles } = require('../enums/roles');
 const success = true;
 
-//@desc     Register user
-//@route    POST /api/v1/auth/register
-//@access   PUBLIC
+// @desc     Register user
+// @route    POST /api/v1/auth/register
+// @access   PUBLIC
 exports.register = asyncHandler(async(req, res, next) => {
    const { password } = req.body;
    let {
@@ -43,9 +43,9 @@ exports.register = asyncHandler(async(req, res, next) => {
       .json({ success, data });
 });
 
-//@desc     Sign in and get that web token
-//@route    POST /api/v1/auth/authenticate
-//@access   PUBLIC
+// @desc     Sign in and get that web token
+// @route    POST /api/v1/auth/authenticate
+// @access   PUBLIC
 exports.authenticate = asyncHandler(async(req, res, next) => {
    const { email, password } = req.body;
 
@@ -69,9 +69,9 @@ exports.authenticate = asyncHandler(async(req, res, next) => {
    } else sendTokenResponse(user, status.success.OK, res);
 });
 
-//@desc     Get current logged in user
-//@route    POST /api/v1/auth/me
-//@access   PRIVATE
+// @desc     Get current logged in user
+// @route    POST /api/v1/auth/me
+// @access   PRIVATE
 exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
    const user = await User.findById(req.user.id);
 
@@ -82,6 +82,31 @@ exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
          data: user,
       });
 })
+
+// @desc    Forgot Password
+// @route   POST /api/v1/auth/forgotPassword
+// @access  PUBLIC
+exports.forgotPassword = asyncHandler(async(req, res, next) => {
+   const { email } = req.body;
+
+   const user = await User.findOne({ email });
+
+   if (!user) {
+      const errResponse = (new ErrorResponse('No user found with this email', status.error.NOT_FOUND));
+      return next(errResponse);
+   }
+
+   const resetToken = user.getResetPasswordToken();
+
+   await user.save({ validateBeforeSave: false });
+
+   res
+      .status(status.success.OK)
+      .json({
+         success,
+         data: resetToken,
+      });
+});
 
 function sendTokenResponse(user, statusCode, res) {
    const token = user.getSignedJwtToken();
