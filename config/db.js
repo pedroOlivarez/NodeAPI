@@ -1,18 +1,20 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const TIMEOUT = 10000;
 
-const connectWithTimeout = ms => {
+function connectWithTimeout(ms) {
    const ourPromise = new Promise(async (resolve, reject) => {
       try {
-         setTimeout(() => {
-            reject(new Error(`Connecting took longer than ${ms}ms`));
-         }, ms);
-         const result = await mongoose.connect(process.env.MONG_URI, {
+         setTimeout(
+            () =>  reject(new Error(`Connecting took longer than ${ms}ms`)),
+            ms
+         );
+         const options = {
             useNewUrlParser: true,
             useCreateIndex: true,
             useFindAndModify: false,
-            useUnifiedTopology: true
-         });
+            useUnifiedTopology: true,
+         };
+         const result = await mongoose.connect(process.env.MONG_URI, options);
          resolve(result);
       } catch (err) {
          reject(err);
@@ -21,7 +23,7 @@ const connectWithTimeout = ms => {
    return ourPromise;
 };
 
-const connectDB = async () => {
+async function connectDB() {
    const conn = await connectWithTimeout(TIMEOUT);
    console.log(`MongoDB Connected: ${conn.connection.host}`.magenta.underline.bold);
 };

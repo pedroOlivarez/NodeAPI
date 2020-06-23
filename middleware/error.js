@@ -1,35 +1,38 @@
-const ErrorResponse = require("../utils/errorResponse");
+const ErrorResponse = require('../utils/errorResponse');
+const { status } = require('../enums/responseStatus');
 
 function errorHandler(err, req, res, next) {
    let error = { ...err };
+   let message, statusCode;
    console.log(err.stack.red);
 
-   if (err.name === "CastError") {
-      const message = `${err.value} is not a valid Id`;
-      error = new ErrorResponse(message, 400);
-   }
-
-   if (err.code && err.code === 11000) {
-      const message = `Duplicate field value error. Error Message: ${err.errmsg}`;
-      error = new ErrorResponse(message, 400);
-   }
-
-   if (err.name === "ValidationError") {
-      const message = Object.values(err.errors)
+   if (err.name === 'CastError') {
+      message = `${err.value} is not a valid Id`;
+      statusCode = status.error.BAD_REQUEST;
+   } else if (err.name === 'ValidationError') {
+      message = Object.values(err.errors)
          .map(e => e.message)
-         .join(". ");
-      error = new ErrorResponse(message, 400);
+         .join('||');
+      statusCode = status.error.BAD_REQUEST;
+   } else if (err.code === 11000) {
+      message = `Duplicate field value error. Error Message: ${err.errmsg}`;
+      statusCode = status.error.BAD_REQUEST;
+   } else if (err.statusCode === status.error.NOT_FOUND) {
+      message = err.message;
+      statusCode = status.error.NOT_FOUND;
+   } else {
+      message = err.message;
+      statusCode = err.statusCode;
    }
 
-   if (err.statusCode === 404) {
-      const message = err.message;
-      error = new ErrorResponse(message, 404);
-   }
+   error = new ErrorResponse(message, statusCode);
 
-   res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Server error",
-   });
+   res
+      .status(error.statusCode || status.error.SERVER_ERROR)
+      .json({
+         success: false,
+         message: error.message || 'Server error',
+      });
 }
 
 module.exports = errorHandler;
