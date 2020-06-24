@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const sendEmail = require('../utils/sendEmail');
 const { status } = require('../enums/responseStatus');
 const { roles } = require('../enums/roles');
 const success = true;
@@ -88,6 +89,7 @@ exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
 // @access  PUBLIC
 exports.forgotPassword = asyncHandler(async(req, res, next) => {
    const { email } = req.body;
+   const validateBeforeSave = false;
 
    const user = await User.findOne({ email });
 
@@ -98,14 +100,31 @@ exports.forgotPassword = asyncHandler(async(req, res, next) => {
 
    const resetToken = user.getResetPasswordToken();
 
-   await user.save({ validateBeforeSave: false });
+   await user.save({ validateBeforeSave });
+
+   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/resetpassword/${resetToken}`;
+   const text = `You are receivign this email because you (or someone else) has requested to reset the password for Pedro's awesome devCamper API which utilizes mongoDB.\nTo complete the reset, make a PUT request to :\n\n${resetUrl}`;
+   const subject = 'Reset password';
+   const options = {
+      to: email,
+      subject,
+      text,
+   };
+
+   try {
+      await sendEmail(options);
+   } catch (err) {
+      console.error(err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave });
+      const errResponse = new ErrorResponse(`Error sending password reset email to ${email}`, status.error.SERVER_ERROR);
+      return next(errResponse);
+   }
 
    res
       .status(status.success.OK)
-      .json({
-         success,
-         data: resetToken,
-      });
+      .json({ success });
 });
 
 function sendTokenResponse(user, statusCode, res) {
