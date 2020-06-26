@@ -9,6 +9,7 @@ async function sendEmail(options) {
       FROM_EMAIL,
       FROM_NAME,
    } = process.env;
+   
    const { 
       to,
       subject,

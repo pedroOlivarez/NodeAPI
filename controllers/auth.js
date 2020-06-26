@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
@@ -85,7 +86,7 @@ exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
 })
 
 // @desc    Forgot Password
-// @route   POST /api/v1/auth/forgotPassword
+// @route   POST /api/v1/auth/forgot-password
 // @access  PUBLIC
 exports.forgotPassword = asyncHandler(async(req, res, next) => {
    const { email } = req.body;
@@ -102,7 +103,7 @@ exports.forgotPassword = asyncHandler(async(req, res, next) => {
 
    await user.save({ validateBeforeSave });
 
-   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/resetpassword/${resetToken}`;
+   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${resetToken}`;
    const text = `You are receivign this email because you (or someone else) has requested to reset the password for Pedro's awesome devCamper API which utilizes mongoDB.\nTo complete the reset, make a PUT request to :\n\n${resetUrl}`;
    const subject = 'Reset password';
    const options = {
@@ -125,6 +126,49 @@ exports.forgotPassword = asyncHandler(async(req, res, next) => {
    res
       .status(status.success.OK)
       .json({ success });
+});
+
+// @desc    Reset Password
+// @route   PUT /api/v1/auth/reset-password/:resetToken
+// @access  Public
+exports.resetPassword = asyncHandler(async(req, res, next) => {
+   const { resetToken } = req.params;
+   const newPassword = req.body.password;
+   let errResponse;
+   const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+   const userQuery = {
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+   }
+
+   const user = await User
+      .findOne(userQuery)
+      .select('+password');
+
+   if (!user) {
+      errResponse = new ErrorResponse('Invalid reset token', status.error.BAD_REQUEST);
+   } else if (await user.validatePassword(newPassword)) {
+      errResponse = new ErrorResponse('New password cannot be the same as the old password', status.error.BAD_REQUEST);
+   }
+
+   if (errResponse) return next(errResponse);
+
+   user.password = newPassword;
+   user.resetPasswordToken = undefined;
+   user.resetPasswordExpire = undefined;
+
+   await user.save();
+
+   res
+      .status(status.success.OK)
+      .json({
+         success,
+         message: 'Password successfully reset'
+      });
 });
 
 function sendTokenResponse(user, statusCode, res) {
