@@ -12,7 +12,7 @@ function errorHandler(err, req, res, next) {
    } else if (err.name === 'ValidationError') {
       message = Object.values(err.errors)
          .map(e => e.message)
-         .join('||');
+         .join(' ');
       statusCode = status.error.BAD_REQUEST;
    } else if (err.code === 11000) {
       message = `Duplicate field value error. Error Message: ${err.errmsg}`;
