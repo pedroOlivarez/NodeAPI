@@ -135,9 +135,10 @@ exports.resetPassword = asyncHandler(async(req, res, next) => {
 
 // @desc    Update Password
 // @route   PUT /api/v1/auth/update-password
-// @access  PUBLIC
+// @access  PRIVATE
 exports.updatePassword = asyncHandler(async(req, res, next) => {
    const { email, password, newPassword } = req.body;
+   let errResponse;
 
    if (!email || !password) {
       const errResponse = new ErrorResponse('Please provide an email and a password', status.error.BAD_REQUEST);
@@ -148,15 +149,15 @@ exports.updatePassword = asyncHandler(async(req, res, next) => {
       .findOne({ email })
       .select('+password');
 
-   if (!user) {
-      const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
-      return next(errResponse);
+   if (!user
+      || user._id.toString() !== req.user.id
+      || !await user.validatePassword(password)) {
+      errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
+   } else if (newPassword === password) {
+      errResponse = new ErrorResponse('New password cannot be the same as old password.', status.error.BAD_REQUEST);
    }
 
-   if (!await user.validatePassword(password)) {
-      const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
-      return next(errResponse);
-   }
+   if (errResponse) return next(errResponse);
 
    user.password = newPassword;
 

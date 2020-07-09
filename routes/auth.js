@@ -23,6 +23,6 @@ router.route('/reset-password/:resetToken')
    .put(resetPassword);
 
 router.route('/update-password')
-   .put(updatePassword);
+   .put(protect, updatePassword);
 
 module.exports = router;
