@@ -1,5 +1,7 @@
 const User = require('../models/User');
+const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const { userFields } = require('../enums/updatableFields');
 const { status } = require('../enums/responseStatus');
 const success = true;
 
@@ -42,4 +44,24 @@ exports.register = asyncHandler(async(req, res, next) => {
 // @access  PRIVAE
 // @roles   ADMIN
 exports.updateUser = asyncHandler(async(req, res, next) => {
+   const user = await User.findOne({_id: req.params.id})
+   const data = {};
+
+   userFields.forEach(field => {
+      if (req.body[field]) { 
+         user[field] = req.body[field];
+         data[field] = req.body[field];
+      }
+   });
+
+   if (!Object.keys(data).length) {
+      const errResponse = new ErrorResponse(`No valid properties were passed in. Unable to update user`, status.error.BAD_REQUEST);
+      return next(errResponse);
+   }
+
+   await user.save({ validateBeforeSave: true });
+
+   res
+      .status(status.success.OK)
+      .json({ success, data });
 });
