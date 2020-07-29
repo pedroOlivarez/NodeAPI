@@ -98,11 +98,15 @@ exports.updateUser = asyncHandler(async(req, res, next) => {
 
 exports.deleteUser = asyncHandler(async(req, res, next) => {
    const user = await User.findById(req.params.id);
+   let errResponse;
 
    if (!user) {
-      const errResponse = new ErrorResponse(`User with Id of ${req.params.id} not found.`, status.error.NOT_FOUND);
-      return next(errResponse);
+      errResponse = new ErrorResponse(`User with Id of ${req.params.id} not found.`, status.error.NOT_FOUND);
+   } else if (user._id.toString() === req.user.id) {
+      errResponse = new ErrorResponse('Unable to delete this user because you are currently logged in as them', status.error.FORBIDDEN);
    }
+
+   if (errResponse) return next(errResponse);
 
    user.remove();
 
