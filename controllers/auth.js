@@ -22,11 +22,7 @@ exports.authenticate = asyncHandler(async(req, res, next) => {
       .findOne({ email })
       .select('_id role +password');
 
-   if (!user) {
-      const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
-      return next(errResponse);
-   }
-   if (!await user.validatePassword(password)) {
+   if (!user || !await user.validatePassword(password)) {
       const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
       return next(errResponse);
    }

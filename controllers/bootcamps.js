@@ -7,18 +7,18 @@ const { status } = require('../enums/responseStatus');
 const { roles } = require('../enums/roles');
 const success = true;
 
-//@desc     Get all bootcamps
-//@route    GET /api/v1/bootcamps
-//@access   PUBLIC
+// @desc     Get all bootcamps
+// @route    GET /api/v1/bootcamps
+// @access   PUBLIC
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
    res
       .status(status.success.OK)
       .json(res.results);
 });
 
-//@desc     Get single bootcamp
-//@route    GET /api/v1/bootcamps/:id
-//@access   PUBLIC
+// @desc     Get single bootcamp
+// @route    GET /api/v1/bootcamps/:id
+// @access   PUBLIC
 exports.getBootcamp = asyncHandler(async (req, res, next) => {
    const bootcamp = await Bootcamp
       .findById(req.params.id)
@@ -37,9 +37,9 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
       });
 });
 
-//@desc     Create new bootcamp
-//@route    POST /api/v1/bootcamps/
-//@access   PRIVATE
+// @desc     Create new bootcamp
+// @route    POST /api/v1/bootcamps/
+// @access   PRIVATE
 exports.createBootcamp = asyncHandler(async (req, res, next) => {
    req.body.user = req.user.id;
    if (req.user.role !== roles.ADMIN) {
@@ -59,9 +59,9 @@ exports.createBootcamp = asyncHandler(async (req, res, next) => {
       });
 });
 
-//@desc     Update bootcamp
-//@route    PUT /api/v1/bootcamps/:id
-//@access   PRIVATE
+// @desc     Update bootcamp
+// @route    PUT /api/v1/bootcamps/:id
+// @access   PRIVATE
 exports.updateBootcamp = asyncHandler(async (req, res, next) => {
    let bootcamp = await Bootcamp.findById(req.params.id);
 
@@ -82,9 +82,9 @@ exports.updateBootcamp = asyncHandler(async (req, res, next) => {
       .json({ success, data: bootcamp });
 });
 
-//@desc     Delete bootcamp
-//@route    DELETE /api/v1/bootcamps/:id
-//@access   PRIVATE
+// @desc     Delete bootcamp
+// @route    DELETE /api/v1/bootcamps/:id
+// @access   PRIVATE
 exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
    const bootcamp = await Bootcamp
       .findById(req.params.id)
@@ -139,9 +139,9 @@ exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
       });
 });
 
-//@desc     Upload photo for bootcamp
-//@route    PUT /api/v1/bootcamps/:id/photo
-//@access   PRIVATE
+// @desc     Upload photo for bootcamp
+// @route    PUT /api/v1/bootcamps/:id/photo
+// @access   PRIVATE
 exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
    let errResponse;
    const bootcamp = await Bootcamp.findById(req.params.id);

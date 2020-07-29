@@ -35,6 +35,7 @@ function modifyRequest(req) {
       req.start = (req.page - 1) * req.limit;
       req.end = req.page * req.limit;
 
+      // TO-DO: Remove this delete. It's bad practice. Find a way to rebuild a new object, I think.
       _excludedFields.forEach(param => delete ourQuery[param]);
 
       queryStr = JSON.stringify(ourQuery);

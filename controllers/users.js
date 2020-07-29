@@ -5,10 +5,40 @@ const { userFields } = require('../enums/updatableFields');
 const { status } = require('../enums/responseStatus');
 const success = true;
 
+// @desc    Get Users
+// @route   GET api/v1/users
+// @Access  PRIVATE
+// @roles   ADMIN
+exports.getUsers = asyncHandler(async (req, res, next) => {
+   res
+      .status(status.success.OK)
+      .json(res.results);
+});
+
+// @desc    Get User
+// @route   GET api/v1/users/:id
+// @Access  PRIVATE
+// @roles   ADMIN
+exports.getUser = asyncHandler(async (req, res, next) => {
+   const user = await User.findById(req.params.id);
+
+   if (!user) {
+      const errResponse = new ErrorResponse(`User with Id of ${req.params.id} not found.`, status.error.NOT_FOUND);
+      return next(errResponse);
+   }
+
+   res
+      .status(status.success.OK)
+      .json({
+         success,
+         data: user
+      });
+});
+
 // @desc    Register user
 // @route   POST /api/v1/users
 // @access  PRIVATE
-// @roles   Admin
+// @roles   ADMIN
 exports.register = asyncHandler(async(req, res, next) => {
    const { password } = req.body;
    let {
@@ -64,4 +94,22 @@ exports.updateUser = asyncHandler(async(req, res, next) => {
    res
       .status(status.success.OK)
       .json({ success, data });
+});
+
+exports.deleteUser = asyncHandler(async(req, res, next) => {
+   const user = await User.findById(req.params.id);
+
+   if (!user) {
+      const errResponse = new ErrorResponse(`User with Id of ${req.params.id} not found.`, status.error.NOT_FOUND);
+      return next(errResponse);
+   }
+
+   user.remove();
+
+   res
+      .status(status.success.OK)
+      .json({
+         success,
+         data: user
+      });
 });
