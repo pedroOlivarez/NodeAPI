@@ -6,11 +6,10 @@ const sendEmail = require('../utils/sendEmail');
 const { status } = require('../enums/responseStatus');
 const success = true;
 
-
 // @desc     Sign in and get that web token
 // @route    POST /api/v1/auth/authenticate
 // @access   PUBLIC
-exports.authenticate = asyncHandler(async(req, res, next) => {
+exports.authenticate = asyncHandler(async (req, res, next) => {
    const { email, password } = req.body;
 
    if (!email || !password) {
@@ -18,42 +17,38 @@ exports.authenticate = asyncHandler(async(req, res, next) => {
       return next(errResponse);
    }
 
-   const user = await User
-      .findOne({ email })
-      .select('_id role +password');
+   const user = await User.findOne({ email }).select('_id role +password');
 
-   if (!user || !await user.validatePassword(password)) {
+   if (!user || !(await user.validatePassword(password))) {
       const errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
       return next(errResponse);
    }
-   
+
    sendTokenResponse(user, status.success.OK, res);
 });
 
 // @desc     Get current logged in user
 // @route    POST /api/v1/auth/me
 // @access   PRIVATE
-exports.getLoggedInUser = asyncHandler(async(req, res, next) => {
+exports.getLoggedInUser = asyncHandler(async (req, res, next) => {
    const user = await User.findById(req.user.id);
 
-   res
-      .status(status.success.OK)
-      .json({
-         success,
-         data: user,
-      });
-})
+   res.status(status.success.OK).json({
+      success,
+      data: user,
+   });
+});
 
 // @desc    Forgot Password
 // @route   POST /api/v1/auth/forgot-password
 // @access  PUBLIC
-exports.forgotPassword = asyncHandler(async(req, res, next) => {
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
    const { email } = req.body;
 
    const user = await User.findOne({ email });
 
    if (!user) {
-      const errResponse = (new ErrorResponse('No user found with this email', status.error.NOT_FOUND));
+      const errResponse = new ErrorResponse('No user found with this email', status.error.NOT_FOUND);
       return next(errResponse);
    }
 
@@ -81,31 +76,24 @@ exports.forgotPassword = asyncHandler(async(req, res, next) => {
       return next(errResponse);
    }
 
-   res
-      .status(status.success.OK)
-      .json({ success });
+   res.status(status.success.OK).json({ success });
 });
 
 // @desc    Reset Password
 // @route   PUT /api/v1/auth/reset-password/:resetToken
 // @access  PUBLIC
-exports.resetPassword = asyncHandler(async(req, res, next) => {
+exports.resetPassword = asyncHandler(async (req, res, next) => {
    const { resetToken } = req.params;
    const newPassword = req.body.password;
    let errResponse;
-   const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+   const resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
    const userQuery = {
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
-   }
+   };
 
-   const user = await User
-      .findOne(userQuery)
-      .select('+password');
+   const user = await User.findOne(userQuery).select('+password');
 
    if (!user) {
       errResponse = new ErrorResponse('Invalid reset token', status.error.BAD_REQUEST);
@@ -121,18 +109,16 @@ exports.resetPassword = asyncHandler(async(req, res, next) => {
 
    await user.save();
 
-   res
-      .status(status.success.OK)
-      .json({
-         success,
-         message: 'Password successfully reset'
-      });
+   res.status(status.success.OK).json({
+      success,
+      message: 'Password successfully reset',
+   });
 });
 
 // @desc    Update Password
 // @route   PUT /api/v1/auth/update-password
 // @access  PRIVATE
-exports.updatePassword = asyncHandler(async(req, res, next) => {
+exports.updatePassword = asyncHandler(async (req, res, next) => {
    const { email, password, newPassword } = req.body;
    let errResponse;
 
@@ -141,13 +127,9 @@ exports.updatePassword = asyncHandler(async(req, res, next) => {
       return next(errResponse);
    }
 
-   const user = await User
-      .findOne({ email })
-      .select('+password');
+   const user = await User.findOne({ email }).select('+password');
 
-   if (!user
-      || user._id.toString() !== req.user.id
-      || !await user.validatePassword(password)) {
+   if (!user || user._id.toString() !== req.user.id || !(await user.validatePassword(password))) {
       errResponse = new ErrorResponse('Invalid credentials', status.error.UNAUTHORIZED);
    } else if (newPassword === password) {
       errResponse = new ErrorResponse('New password cannot be the same as old password.', status.error.BAD_REQUEST);
@@ -159,10 +141,7 @@ exports.updatePassword = asyncHandler(async(req, res, next) => {
 
    await user.save();
 
-   res
-      .status(status.success.OK)
-      .json({ success });
-   
+   res.status(status.success.OK).json({ success });
 });
 
 function sendTokenResponse(user, statusCode, res) {
@@ -171,12 +150,9 @@ function sendTokenResponse(user, statusCode, res) {
    const options = {
       expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 60 * 1000),
       httpOnly: true,
-   }
+   };
 
    if (process.env.NODE_ENV === 'production') options.secure = true;
 
-   res
-      .status(statusCode)
-      .cookie('token', token, options)
-      .json({ success, token });
+   res.status(statusCode).cookie('token', token, options).json({ success, token });
 }
